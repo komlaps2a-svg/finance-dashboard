@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Finance Pay">
     <link rel="apple-touch-icon" href="icon-192x192.png">
     
-    <title>Finance Pay v29.3</title>
+    <title>Finance Pay v29.4</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,8 +18,8 @@
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script defer type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
-    <link rel="stylesheet" href="style.css">
-    <script defer src="main.js"></script>
+    <link rel="stylesheet" href="style.css?v=105">
+    <script defer src="main.js?v=105"></script>
 </head>
 <body>
 
@@ -45,16 +45,12 @@
         </div>
     </div>
 
-        <div class="controls-header" style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; max-width: 100vw; padding-right: 15px;">
-        <div class="wallet-switcher" style="flex: 1; min-width: 0;" id="walletSwitchContainer" data-active="harian">
-        <div class="wallet-slider"></div>
-        <button class="btn-tab active" onclick="switchWallet('harian')" id="tab-harian">Dompet Harian</button>
-        <button class="btn-tab" onclick="switchWallet('tabungan')" id="tab-tabungan">Brankas Tabungan</button>
+    <div class="controls-header" style="display: block; width: 100%; box-sizing: border-box;">
+        <div class="wallet-switcher" style="width: 100%; display: flex;" id="walletSwitchContainer" data-active="harian">
+            <div class="wallet-slider"></div>
+            <button class="btn-tab active" onclick="switchWallet('harian')" id="tab-harian">Dompet Harian</button>
+            <button class="btn-tab" onclick="switchWallet('tabungan')" id="tab-tabungan">Brankas Tabungan</button>
         </div>
-        
-        <button id="themeToggleBtn" onclick="toggleTheme()" style="background: var(--hitam-card); border: 1px solid var(--border); border-radius: 12px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.3s;">
-            <svg id="theme-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        </button>
     </div>
 
     <div class="filter-insight-row">
@@ -150,17 +146,24 @@
             </table>
         </div>
     </div>
+
     <div class="modal-overlay" id="profileViewModal">
         <div class="modal-card">
             <div style="text-align: center; margin-bottom: 25px; position: relative;">
+                
+                <button id="themeToggleBtn" onclick="toggleTheme()" style="position: absolute; top: 0; left: 0; background:var(--hitam); border:1px solid var(--border); color:var(--text-muted); padding:10px; border-radius:10px; cursor:pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" id="theme-icon"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                </button>
+
+                <button onclick="requestProfileEdit()" style="position: absolute; top: 0; right: 0; background:var(--hitam); border:1px solid var(--border); color:var(--text-muted); padding:10px; border-radius:10px; cursor:pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+
                 <div class="profile-pic-container" style="width: 80px; height: 80px; margin: 0 auto 10px auto; border-color:var(--putih);">
                     <img src="" id="viewProfileImg" class="profile-pic" alt="Profile View">
                 </div>
                 <h2 style="margin:0; font-size: 26px; font-weight:900;" id="viewProfileName">Guest</h2>
                 <p style="margin:5px 0 0 0; font-size: 11px; color: var(--text-muted); font-weight:700;" id="viewJoinDate"></p>
-                <button onclick="requestProfileEdit()" style="position: absolute; top: 0; right: 0; background:var(--hitam); border:1px solid var(--border); color:var(--text-muted); padding:10px; border-radius:10px; cursor:pointer;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
             </div>
             
             <div style="display: flex; justify-content: flex-start; margin-bottom: 15px;">
