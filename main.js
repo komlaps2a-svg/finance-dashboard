@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '29.0'; 
+const APP_VERSION = '28.9'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -1300,8 +1300,9 @@ function sendOTPEmail() {
             document.getElementById('inputOTP').value = ''; document.getElementById('inputNewPinOTP').value = '';
             document.getElementById('otpVerifyModal').classList.add('active');
             btn.innerText = "Kirim Kode Sekarang"; btn.disabled = false;
-        }, function() {
-            showToast("Gagal mengirim email!", "error"); btn.innerText = "Kirim Kode Sekarang"; btn.disabled = false;
+            }, function(error) {
+            showToast("Error: " + (error.text || "Ditolak EmailJS"), "error"); 
+            btn.innerText = "Kirim Kode Sekarang"; btn.disabled = false;
         });
 }
 
