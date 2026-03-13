@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '28.9'; 
+const APP_VERSION = '29.0'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -276,7 +276,7 @@ async function initSupabaseBackground() {
         });
     }
 
-    if (typeof window.emailjs !== 'undefined') { window.emailjs.init("qcqCpH81lqwQKw_MG"); }
+    if (typeof window.emailjs !== 'undefined') { window.emailjs.init("vHhCqrnVXplmKz16K"); }
 }
 
 // ==========================================
