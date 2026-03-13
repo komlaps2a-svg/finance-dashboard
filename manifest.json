@@ -1,5 +1,5 @@
 {
-  "name": "Enterprise Finance Dashboard",
+  "name": "finance pay",
   "short_name": "Finance Pay",
   "start_url": "./index.html",
   "display": "standalone",
