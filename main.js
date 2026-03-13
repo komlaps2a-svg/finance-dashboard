@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '28.9'; 
+const APP_VERSION = '29.1'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
