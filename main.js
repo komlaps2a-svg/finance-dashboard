@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '29.1'; 
+const APP_VERSION = '29.2'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -1294,7 +1294,7 @@ function sendOTPEmail() {
     otpExpiryTime = Date.now() + (5 * 60 * 1000);
 
     const templateParams = { to_email: profile.googleEmail, to_name: profile.name, otp_code: generatedOTP };
-    emailjs.send('service_4v89q7h', 'template_5q05e2d', templateParams)
+    emailjs.send('service_4v89q7h', 'template_w9fgvcf', templateParams)
         .then(function() {
             showToast("Kode terkirim ke Email!", "success"); closeModal('otpRequestModal');
             document.getElementById('inputOTP').value = ''; document.getElementById('inputNewPinOTP').value = '';
