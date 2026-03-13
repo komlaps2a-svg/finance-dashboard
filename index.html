@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Finance Pay">
     <link rel="apple-touch-icon" href="icon-192x192.png">
     
-    <title>Finance Pay v29.2</title>
+    <title>Finance Pay v29.3</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -45,11 +45,11 @@
         </div>
     </div>
 
-    <div class="controls-header" style="flex-direction: row; align-items: center; gap: 10px;">
-        <div class="wallet-switcher" style="flex: 1;" id="walletSwitchContainer" data-active="harian">
-            <div class="wallet-slider"></div>
-            <button class="btn-tab active" onclick="switchWallet('harian')" id="tab-harian">Dompet Harian</button>
-            <button class="btn-tab" onclick="switchWallet('tabungan')" id="tab-tabungan">Brankas Tabungan</button>
+        <div class="controls-header" style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; max-width: 100vw; padding-right: 15px;">
+        <div class="wallet-switcher" style="flex: 1; min-width: 0;" id="walletSwitchContainer" data-active="harian">
+        <div class="wallet-slider"></div>
+        <button class="btn-tab active" onclick="switchWallet('harian')" id="tab-harian">Dompet Harian</button>
+        <button class="btn-tab" onclick="switchWallet('tabungan')" id="tab-tabungan">Brankas Tabungan</button>
         </div>
         
         <button id="themeToggleBtn" onclick="toggleTheme()" style="background: var(--hitam-card); border: 1px solid var(--border); border-radius: 12px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.3s;">
