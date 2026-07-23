@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '29.8'; 
+const APP_VERSION = '29.9'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -1239,13 +1239,13 @@ function renderTable(data) {
         else if (tx.status === 'lunas_pinjaman') cr = `<div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div>`;
         else if (tx.status === 'cicilan_masuk') cr = `<div class="badge-cat" style="border: 1px solid var(--kuning); color:var(--kuning); background:rgba(245,158,11,0.1);">CICILAN</div>`;
 
-        t.innerHTML += `<tr class="clickable-row" onclick="openReceipt('${tx.id || tx.date}')">
+                t.innerHTML += `<tr class="clickable-row" onclick="openReceipt('${tx.id || tx.date}')">
             <td style="color:var(--text-muted); font-size:11px; vertical-align:middle;">${formatDetailDate(tx.date).split(' - ')[0]}<br>${formatDetailDate(tx.date).split(' - ')[1]}</td>
             <td style="vertical-align:middle;">${cr}</td>
-            <td style="vertical-align:middle;">${dr}</td>
-            <td style="vertical-align:middle; text-align:right; width: 1%; white-space: nowrap;">
-                <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:nowrap;">
-                    <div style="display:flex; gap:6px;">
+            <td style="vertical-align:middle; width:100%;">${dr}</td>
+            <td style="vertical-align:middle; text-align:right; white-space: nowrap;">
+                <div style="display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:nowrap;">
+                    <div style="display:flex; gap:6px; flex-shrink:0;">
                         <button type="button" style="background:rgba(245,158,11,0.15); color:var(--kuning); border:1px solid var(--kuning); width:28px; height:28px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;" onclick="promptActionPinFromTable(event, 'edit', '${tx.id || tx.date}')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                         </button>
@@ -1253,7 +1253,7 @@ function renderTable(data) {
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"/></svg>
                         </button>
                     </div>
-                    <span class="amt-cell" style="color:${iM?'var(--biru)':'var(--merah)'}; margin:0; line-height:1;">${iM?'+':'-'}${formatRp(tx.amount)}</span>
+                    <span class="amt-cell" style="color:${iM?'var(--biru)':'var(--merah)'}; margin:0; line-height:1; min-width:105px; text-align:right; display:inline-block; flex-shrink:0;">${iM?'+':'-'}${formatRp(tx.amount)}</span>
                 </div>
             </td>
         </tr>`;
