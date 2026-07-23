@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Finance Pay">
     <link rel="apple-touch-icon" href="icon-192x192.png">
     
-    <title>Finance Pay v29.7</title>
+    <title>Finance Pay v29.8</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -427,23 +427,11 @@
         </div>
     </div>
 
-            <div class="modal-overlay" id="receiptModal">
+                <div class="modal-overlay" id="receiptModal">
         <div class="modal-card">
             <div class="receipt-card" id="receiptContent">
             </div>
             <button class="btn-modal btn-cancel" onclick="closeModal('receiptModal')" style="margin-top: 15px;">Tutup Bukti Transaksi</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="otpRequestModal">
-        <div class="modal-card" style="text-align: center;">
-            <div style="background: rgba(59, 130, 246, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; color: var(--biru);">
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            </div>
-            <h2 style="margin-top:0; color: var(--biru);">Reset PIN Terkunci</h2>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 25px;">Kami akan mengirimkan kode rahasia 6-digit ke email Google Anda (<b id="displayUserEmail" style="color:var(--putih);"></b>).</p>
-            <button class="btn-modal" style="background: var(--biru); color: white;" id="btnSendOTP" onclick="sendOTPEmail()">Kirim Kode Sekarang</button>
-            <button class="btn-modal btn-cancel" onclick="closeModal('otpRequestModal')">Batal</button>
         </div>
     </div>
 
