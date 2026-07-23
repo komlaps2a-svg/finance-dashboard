@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Finance Pay">
     <link rel="apple-touch-icon" href="icon-192x192.png">
     
-    <title>Finance Pay v29.6</title>
+    <title>Finance Pay v29.7</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -427,18 +427,13 @@
         </div>
     </div>
 
-        <div class="modal-overlay" id="receiptModal">
+            <div class="modal-overlay" id="receiptModal">
         <div class="modal-card">
             <div class="receipt-card" id="receiptContent">
             </div>
-            
-            <!-- Container baru untuk tombol Edit/Hapus diletakkan di luar kertas struk -->
-            <div id="receiptActionButtons" style="display:flex; gap:10px; margin-top:5px; margin-bottom: 5px;"></div>
-            
-            <button class="btn-modal btn-cancel" onclick="closeModal('receiptModal')" style="margin-top: 10px;">Tutup Bukti Transaksi</button>
+            <button class="btn-modal btn-cancel" onclick="closeModal('receiptModal')" style="margin-top: 15px;">Tutup Bukti Transaksi</button>
         </div>
     </div>
-
 
     <div class="modal-overlay" id="otpRequestModal">
         <div class="modal-card" style="text-align: center;">
