@@ -461,5 +461,41 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="editTxModal">
+        <div class="modal-card">
+            <h2 style="margin-top:0; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Edit Data Transaksi</h2>
+            <input type="hidden" id="edit-tx-id">
+
+            <label class="input-label">Kategori</label>
+            <input type="text" id="edit-tx-category" class="input-field" autocomplete="off">
+
+            <div id="editBorrowerWrapper" style="display: none;">
+                <label class="input-label text-kuning">Nama Peminjam</label>
+                <input type="text" id="edit-tx-borrower" class="input-field" autocomplete="off">
+            </div>
+
+            <label class="input-label">Deskripsi</label>
+            <input type="text" id="edit-tx-desc" class="input-field" autocomplete="off">
+
+            <label class="input-label">Nominal (Rp)</label>
+            <input type="text" id="edit-tx-amount" class="input-field text-kuning" inputmode="numeric" placeholder="0" autocomplete="off" style="font-size: 26px; font-weight: 900; text-align: right;">
+
+            <button type="button" class="btn-modal" onclick="saveEditedTx()">Simpan Perubahan</button>
+            <button type="button" class="btn-modal btn-cancel" onclick="closeModal('editTxModal')">Batal</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="actionPinModal">
+        <div class="modal-card" style="max-width: 320px; text-align: center;">
+            <h2 style="margin-top:0; color: var(--kuning);">Otorisasi Keamanan</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 25px;">Masukkan PIN Profil utama Anda untuk melanjutkan modifikasi data.</p>
+            <input type="password" id="inputActionPin" class="input-field" placeholder="****" inputmode="numeric" maxlength="6" style="text-align: center; font-size: 26px; letter-spacing: 8px; border-color: var(--kuning); margin-bottom: 10px;" autocomplete="off">
+            <input type="hidden" id="actionPinType">
+            <input type="hidden" id="actionPinTxId">
+            <button class="btn-modal" style="background: var(--kuning); color: var(--hitam);" onclick="verifyActionPinFinal()">Verifikasi PIN</button>
+            <button class="btn-modal btn-cancel" onclick="closeModal('actionPinModal')">Batal</button>
+        </div>
+    </div>
+
 </body>
 </html>
