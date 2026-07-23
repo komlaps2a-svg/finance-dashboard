@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '30.1'; 
+const APP_VERSION = '30.2'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -1212,14 +1212,14 @@ function updateUI(searchTerm = '') {
 
 function renderTable(data) {
     const t = document.getElementById('table-body'); t.innerHTML = '';
-        if(data.length === 0) { 
+    if(data.length === 0) { 
         t.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color:var(--text-muted);">Tidak ada transaksi pada rentang waktu ini.</td></tr>`; return; 
     }
     
     [...data].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
         const iM = tx.type === 'masuk'; let c = getDynamicColor(tx.category, tx.type);
         let dr = `<span style="font-weight:700;">${tx.desc}</span>`;
-            if(tx.status === 'dipinjam' || String(tx.status).startsWith('cicil_')) {
+        if(tx.status === 'dipinjam' || String(tx.status).startsWith('cicil_')) {
             let sisaInfo = '';
             if(String(tx.status).startsWith('cicil_')) {
                 let sisa = parseInt(tx.status.split('_')[1]);
@@ -1239,24 +1239,26 @@ function renderTable(data) {
         else if (tx.status === 'lunas_pinjaman') cr = `<div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div>`;
         else if (tx.status === 'cicilan_masuk') cr = `<div class="badge-cat" style="border: 1px solid var(--kuning); color:var(--kuning); background:rgba(245,158,11,0.1);">CICILAN</div>`;
 
-            t.innerHTML += `<tr class="clickable-row" onclick="openReceipt('${tx.id || tx.date}')">
+        t.innerHTML += `<tr class="clickable-row" onclick="openReceipt('${tx.id || tx.date}')">
             <td style="color:var(--text-muted); font-size:11px; vertical-align:middle;">${formatDetailDate(tx.date).split(' - ')[0]}<br>${formatDetailDate(tx.date).split(' - ')[1]}</td>
             <td style="vertical-align:middle;">${cr}</td>
             <td style="vertical-align:middle; width:100%;">${dr}</td>
-            <td style="vertical-align:middle; text-align:center; white-space:nowrap;">
-                <div style="display:flex; gap:6px; justify-content:center;">
-                    <button type="button" style="background:rgba(245,158,11,0.15); color:var(--kuning); border:1px solid var(--kuning); width:28px; height:28px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;" onclick="promptActionPinFromTable(event, 'edit', '${tx.id || tx.date}')">
+            <td style="vertical-align:middle; text-align:center; padding-right:15px; width:1%;">
+                <div style="display:flex; gap:6px; justify-content:center; align-items:center;">
+                    <button type="button" style="background:rgba(245,158,11,0.15); color:var(--kuning); border:1px solid var(--kuning); width:32px; height:32px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s; padding:0; flex-shrink:0;" onclick="promptActionPinFromTable(event, 'edit', '${tx.id || tx.date}')">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                     </button>
-                    <button type="button" style="background:rgba(239,68,68,0.15); color:var(--merah); border:1px solid var(--merah); width:28px; height:28px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;" onclick="promptActionPinFromTable(event, 'delete', '${tx.id || tx.date}')">
+                    <button type="button" style="background:rgba(239,68,68,0.15); color:var(--merah); border:1px solid var(--merah); width:32px; height:32px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s; padding:0; flex-shrink:0;" onclick="promptActionPinFromTable(event, 'delete', '${tx.id || tx.date}')">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"/></svg>
                     </button>
                 </div>
             </td>
-            <td class="amt-cell" style="vertical-align:middle; text-align:right; color:${iM?'var(--biru)':'var(--merah)'}; white-space:nowrap;">
+            <td class="amt-cell" style="vertical-align:middle; text-align:right; color:${iM?'var(--biru)':'var(--merah)'}; white-space:nowrap; padding-left:0;">
                 ${iM?'+':'-'}${formatRp(tx.amount)}
             </td>
         </tr>`;
+    });
+}
 
 function renderCharts(data) {
     if (typeof Chart === 'undefined') { console.warn("Sistem Grafik Offline."); return; }
