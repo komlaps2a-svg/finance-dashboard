@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '29.6'; 
+const APP_VERSION = '29.7'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -1151,8 +1151,6 @@ function openReceipt(txId) {
     const strTxId = String(txId); const tx = db.find(t => String(t.id) === strTxId || String(t.date) === strTxId); if(!tx) return; 
     const rDate = formatDetailDate(tx.date); const rId = "TRX-" + new Date(tx.date).getTime().toString().slice(-8); 
     const rType = tx.type === 'masuk' ? 'Pemasukan' : 'Pengeluaran'; const rColor = tx.type === 'masuk' ? 'var(--hijau)' : 'var(--merah)'; 
-    
-    // 1. Injeksi data khusus ke area kertas struk
     document.getElementById('receiptContent').innerHTML = ` 
         <div class="receipt-head">
             <h3 style="margin:0 0 5px 0; color:var(--putih);">BUKTI MUTASI</h3>
@@ -1169,20 +1167,8 @@ function openReceipt(txId) {
             <span class="receipt-val" style="font-size: clamp(16px, 5.5vw, 22px); color:${rColor}; letter-spacing:-1px; white-space: nowrap !important; word-break: keep-all !important; flex-grow: 1; text-align: right;">${formatRp(tx.amount)}</span> 
         </div> 
     `; 
-    
-    // 2. Injeksi tombol aksi ke wadah baru di luar kertas struk (Fleksibel & proporsional)
-    document.getElementById('receiptActionButtons').innerHTML = `
-        <button class="btn-modal" style="background:var(--kuning); color:var(--hitam); font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:6px; flex:1; margin-top:0;" onclick="promptActionPin('edit', '${strTxId}')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit
-        </button>
-        <button class="btn-modal" style="background:var(--merah); color:var(--putih); font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:6px; flex:1; margin-top:0;" onclick="promptActionPin('delete', '${strTxId}')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"/></svg> Hapus
-        </button>
-    `;
-
     document.getElementById('receiptModal').classList.add('active'); 
 }
-
 
 const searchInput = document.getElementById('searchTxInput'); 
 const searchClear = document.getElementById('searchClearBtn'); 
@@ -1253,7 +1239,25 @@ function renderTable(data) {
         else if (tx.status === 'lunas_pinjaman') cr = `<div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div>`;
         else if (tx.status === 'cicilan_masuk') cr = `<div class="badge-cat" style="border: 1px solid var(--kuning); color:var(--kuning); background:rgba(245,158,11,0.1);">CICILAN</div>`;
 
-        t.innerHTML += `<tr class="clickable-row" onclick="openReceipt('${tx.id || tx.date}')"><td style="color:var(--text-muted); font-size:11px;">${formatDetailDate(tx.date).split(' - ')[0]}<br>${formatDetailDate(tx.date).split(' - ')[1]}</td><td>${cr}</td><td>${dr}</td><td class="amt-cell" style="color:${iM?'var(--biru)':'var(--merah)'};">${iM?'+':'-'}${formatRp(tx.amount)}</td></tr>`;
+                t.innerHTML += `<tr class="clickable-row" onclick="openReceipt('${tx.id || tx.date}')">
+            <td style="color:var(--text-muted); font-size:11px; vertical-align:middle;">${formatDetailDate(tx.date).split(' - ')[0]}<br>${formatDetailDate(tx.date).split(' - ')[1]}</td>
+            <td style="vertical-align:middle;">${cr}</td>
+            <td style="vertical-align:middle;">${dr}</td>
+            <td style="vertical-align:middle; text-align:right;">
+                <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+                    <div style="display:flex; gap:5px;">
+                        <button type="button" style="background:rgba(245,158,11,0.15); color:var(--kuning); border:1px solid var(--kuning); padding:6px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;" onclick="promptActionPinFromTable(event, 'edit', '${tx.id || tx.date}')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        </button>
+                        <button type="button" style="background:rgba(239,68,68,0.15); color:var(--merah); border:1px solid var(--merah); padding:6px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;" onclick="promptActionPinFromTable(event, 'delete', '${tx.id || tx.date}')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"/></svg>
+                        </button>
+                    </div>
+                    <span class="amt-cell" style="color:${iM?'var(--biru)':'var(--merah)'}; margin:0; line-height:1;">${iM?'+':'-'}${formatRp(tx.amount)}</span>
+                </div>
+            </td>
+        </tr>`;
+
     });
 }
 
@@ -1555,4 +1559,10 @@ function executeTxDeleteFinal(txId) {
         updateUI(document.getElementById('searchTxInput') ? document.getElementById('searchTxInput').value : '');
         showToast("Transaksi Dihapus Secara Permanen.", "success");
     });
+}
+
+// Handler pencegat event klik ganda (mencegah Receipt Modal terbuka saat klik Edit/Hapus di Tabel)
+function promptActionPinFromTable(e, action, txId) {
+    e.stopPropagation(); 
+    promptActionPin(action, txId);
 }
