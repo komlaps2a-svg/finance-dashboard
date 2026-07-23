@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '29.4'; 
+const APP_VERSION = '29.5'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -1166,6 +1166,10 @@ function openReceipt(txId) {
             <span class="receipt-label" style="font-size:14px; color:var(--putih); flex-shrink: 0;">TOTAL</span> 
             <span class="receipt-val" style="font-size: clamp(16px, 5.5vw, 22px); color:${rColor}; letter-spacing:-1px; white-space: nowrap !important; word-break: keep-all !important; flex-grow: 1; text-align: right;">${formatRp(tx.amount)}</span> 
         </div> 
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn-modal" style="background:var(--kuning); color:var(--hitam); padding:10px; font-size:12px; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="promptActionPin('edit', '${strTxId}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit</button>
+            <button class="btn-modal" style="background:var(--merah); color:var(--putih); padding:10px; font-size:12px; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="promptActionPin('delete', '${strTxId}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"/></svg> Hapus</button>
+        </div>
     `; 
     document.getElementById('receiptModal').classList.add('active'); 
 }
@@ -1424,3 +1428,121 @@ document.addEventListener("visibilitychange", () => {
         }, 300);
     }
 });
+
+// ==========================================
+// 14. SISTEM MODIFIKASI & PENGHAPUSAN TRANSAKSI
+// ==========================================
+let editRawAmount = 0;
+document.getElementById('edit-tx-amount').addEventListener('input', function() {
+    let v = this.value.replace(/[^0-9]/g, '');
+    if(v === '') { editRawAmount = 0; this.value = ''; return; }
+    editRawAmount = parseInt(v, 10); this.value = editRawAmount.toLocaleString('id-ID');
+});
+
+function promptActionPin(action, txId) {
+    closeModal('receiptModal');
+    if (!profile.pin || profile.pin.trim() === '') {
+        if (action === 'edit') openEditTxModal(txId); else executeTxDeleteFinal(txId);
+        return;
+    }
+    document.getElementById('actionPinType').value = action;
+    document.getElementById('actionPinTxId').value = txId;
+    document.getElementById('inputActionPin').value = '';
+    document.getElementById('actionPinModal').classList.add('active');
+    setTimeout(() => document.getElementById('inputActionPin').focus(), 300);
+}
+
+async function verifyActionPinFinal() {
+    const inputVal = document.getElementById('inputActionPin').value;
+    const hashedInput = await hashPIN(inputVal);
+    if (hashedInput === profile.pin) {
+        closeModal('actionPinModal');
+        const action = document.getElementById('actionPinType').value;
+        const txId = document.getElementById('actionPinTxId').value;
+        if (action === 'edit') openEditTxModal(txId); else executeTxDeleteFinal(txId);
+    } else {
+        showToast("PIN Salah! Akses Ditolak.", "error");
+    }
+}
+
+function openEditTxModal(txId) {
+    const tx = db.find(t => String(t.id) === txId || String(t.date) === txId);
+    if(!tx) return;
+    document.getElementById('edit-tx-id').value = txId;
+    document.getElementById('edit-tx-category').value = tx.category;
+    document.getElementById('edit-tx-desc').value = tx.desc;
+
+    const bw = document.getElementById('editBorrowerWrapper');
+    if (tx.borrower) {
+        bw.style.display = 'block';
+        document.getElementById('edit-tx-borrower').value = tx.borrower;
+    } else {
+        bw.style.display = 'none';
+        document.getElementById('edit-tx-borrower').value = '';
+    }
+
+    editRawAmount = tx.amount;
+    document.getElementById('edit-tx-amount').value = editRawAmount.toLocaleString('id-ID');
+    document.getElementById('editTxModal').classList.add('active');
+}
+
+async function saveEditedTx() {
+    const txId = document.getElementById('edit-tx-id').value;
+    const idx = db.findIndex(t => String(t.id) === txId || String(t.date) === txId);
+    if (idx === -1) return;
+
+    const nCat = properTitleCase(document.getElementById('edit-tx-category').value.trim());
+    const nDesc = properTitleCase(document.getElementById('edit-tx-desc').value.trim());
+    let nBrw = '';
+    if (document.getElementById('editBorrowerWrapper').style.display === 'block') {
+        nBrw = properTitleCase(document.getElementById('edit-tx-borrower').value.trim());
+    }
+
+    if(!nCat || !nDesc || editRawAmount <= 0) { showToast("Gagal: Data manipulasi tidak lengkap.", "error"); return; }
+
+    db[idx].category = nCat;
+    db[idx].desc = nDesc;
+    db[idx].borrower = nBrw;
+    db[idx].amount = editRawAmount;
+
+    if (APP_MODE === 'CLOUD' && currentUser && currentUser.id !== 'offline_user' && navigator.onLine && sbClient && db[idx].id) {
+        try {
+            await sbClient.from('transactions').update({ category: nCat, desc: nDesc, borrower: nBrw, amount: editRawAmount }).eq('id', db[idx].id);
+        } catch(e) {
+            let syncIdx = pendingSync.findIndex(t => String(t.id) === txId || String(t.date) === txId);
+            if(syncIdx > -1) pendingSync[syncIdx] = db[idx]; else pendingSync.push(db[idx]);
+            savePendingSync();
+        }
+    } else {
+        let syncIdx = pendingSync.findIndex(t => String(t.id) === txId || String(t.date) === txId);
+        if(syncIdx > -1) { pendingSync[syncIdx] = db[idx]; savePendingSync(); }
+    }
+
+    saveLocalDB(db); closeModal('editTxModal');
+    updateUI(document.getElementById('searchTxInput') ? document.getElementById('searchTxInput').value : '');
+    showToast("Transaksi Berhasil Diperbarui.", "success");
+}
+
+function executeTxDeleteFinal(txId) {
+    openCustomConfirm("Konfirmasi Hapus Mutlak", "Tindakan ini tidak dapat dibatalkan. Riwayat akan dihapus secara permanen dari server dan lokal. Lanjutkan?", async () => {
+        const idx = db.findIndex(t => String(t.id) === txId || String(t.date) === txId);
+        if (idx === -1) return;
+        const delTx = db[idx];
+        db.splice(idx, 1);
+
+        if (APP_MODE === 'CLOUD' && currentUser && currentUser.id !== 'offline_user' && navigator.onLine && sbClient && delTx.id) {
+            try {
+                await sbClient.from('transactions').delete().eq('id', delTx.id);
+            } catch(e) {
+                console.warn("Respon server lambat, transaksi dimusnahkan secara lokal.");
+            }
+        } else {
+            pendingSync = pendingSync.filter(t => String(t.id) !== txId && String(t.date) !== txId);
+            savePendingSync();
+        }
+
+        saveLocalDB(db);
+        updateUI(document.getElementById('searchTxInput') ? document.getElementById('searchTxInput').value : '');
+        showToast("Transaksi Dihapus Secara Permanen.", "success");
+    });
+}
