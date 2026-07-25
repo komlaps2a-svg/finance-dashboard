@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '30.6'; 
+const APP_VERSION = '30.7'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -1219,16 +1219,34 @@ function updateUI(searchTerm = '') {
 let tableIntersectionObserver = null;
 
 function renderTable(data) {
-    // INJEKSI CSS DINAMIS (Hardware GPU Acceleration, Anti-Lag, & Fix Tabel Bawah Terpotong)
+    // INJEKSI CSS DINAMIS: Animasi 1x Render Anti-Lag, Kategori Elastis Seragam, Fix Batas Bawah Terpotong
     if(!document.getElementById('core-ui-fixes')) {
         const style = document.createElement('style');
         style.id = 'core-ui-fixes';
         style.innerHTML = `
-            .badge-cat { max-width: 105px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block !important; vertical-align: middle; }
-            .table-container { padding-bottom: 120px !important; }
-            .row-anim { opacity: 0; transform: translate3d(0, 35px, 0); transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform, opacity; -webkit-backface-visibility: hidden; backface-visibility: hidden; perspective: 1000px; }
-            .row-anim.is-visible { opacity: 1; transform: translate3d(0, 0, 0); }
-            .row-anim.scroll-up { transform: translate3d(0, -35px, 0); }
+            .badge-cat { 
+                max-width: none !important; 
+                width: 100% !important; 
+                box-sizing: border-box; 
+                overflow: visible !important; 
+                white-space: nowrap !important; 
+                display: block !important; 
+                text-align: center !important; 
+                padding: 6px 12px !important; 
+            }
+            .table-container { 
+                padding-bottom: 150px !important; 
+            }
+            .row-anim { 
+                opacity: 0; 
+                transform: translate3d(0, 20px, 0); 
+                transition: opacity 0.4s ease-out, transform 0.4s ease-out; 
+                will-change: auto; 
+            }
+            .row-anim.is-visible { 
+                opacity: 1; 
+                transform: translate3d(0, 0, 0); 
+            }
         `;
         document.head.appendChild(style);
     }
@@ -1267,7 +1285,10 @@ function renderTable(data) {
 
         htmlStr += `<tr class="clickable-row row-anim" onclick="openReceipt('${tx.id || tx.date}')">
             <td style="color:var(--text-muted); font-size:11px; vertical-align:middle;">${formatDetailDate(tx.date).split(' - ')[0]}<br>${formatDetailDate(tx.date).split(' - ')[1]}</td>
-            <td style="vertical-align:middle;">${cr}</td>
+            
+            <!-- Lebar Kolom 1% untuk memaksa tabel menyusut rapi pada kategori terpanjang -->
+            <td style="vertical-align:middle; width:1%; white-space:nowrap; padding: 15px 10px;">${cr}</td>
+            
             <td style="vertical-align:middle; width:100%;">${dr}</td>
             <td style="vertical-align:middle; text-align:center; padding-right:15px; width:1%;">
                 <div style="display:flex; gap:6px; justify-content:center; align-items:center;">
@@ -1287,23 +1308,19 @@ function renderTable(data) {
 
     t.innerHTML = htmlStr;
 
-    // MESIN ANIMASI OBSERVER (GPU Accelerated)
+    // MESIN ANIMASI OBSERVER (ONE-TIME RENDER: ANTI-LAG!)
     if(window.tableObserver) window.tableObserver.disconnect();
     
     if ('IntersectionObserver' in window) {
-        window.tableObserver = new IntersectionObserver((entries) => {
+        window.tableObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('is-visible');
-                    entry.target.classList.remove('scroll-up');
-                } else {
-                    entry.target.classList.remove('is-visible');
-                    if (entry.boundingClientRect.y < 0) {
-                        entry.target.classList.add('scroll-up');
-                    }
+                    // KUNCI PERFORMA: Begitu animasi tampil, lepaskan pemantauan untuk mencegah kalkulasi DOM saat digulir
+                    observer.unobserve(entry.target); 
                 }
             });
-        }, { rootMargin: '150px 0px 150px 0px', threshold: 0 });
+        }, { rootMargin: '200px 0px 200px 0px', threshold: 0 }); // Margin diperbesar agar render siap sebelum masuk layar
 
         document.querySelectorAll('.row-anim').forEach(row => window.tableObserver.observe(row));
     } else {
