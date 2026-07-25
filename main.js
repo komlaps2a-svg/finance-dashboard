@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '30.3'; 
+const APP_VERSION = '30.4'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -64,11 +64,14 @@ const svgs = {
     atm: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h12M6 12h2M10 12h2M14 12h2M6 16h6"/></svg>`,
     plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
     pinjam: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3v3m-4-3v3M7 3v3m14 8H3m18 4H3m2-14h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>`,
-    check: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+    check: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+    plus_circle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
+    minus_circle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`
 };
+
 const categories = { 
-    masuk: ['Gaji', 'Top-Up', 'Bonus', 'Usaha', 'Investasi', 'Hadiah', 'Lainnya'], 
-    keluar: ['Makan', 'Transport', 'Belanja', 'Tagihan', 'Hiburan', 'Kesehatan', 'Pendidikan', 'Cicilan', 'Sedekah', 'Lainnya'] 
+    masuk: ['Gaji', 'Top-Up', 'Bonus', 'Usaha', 'Investasi', 'Dividen', 'Uang Belanja', 'Pencairan Dana', 'Lainnya'], 
+    keluar: ['Makan', 'Transport', 'Belanja Harian', 'Tagihan', 'Cicilan', 'Kesehatan', 'Edukasi', 'Hiburan', 'Sedekah/Donasi', 'Modal Usaha', 'Pajak', 'Lainnya'] 
 };
 
 function getDynamicColor(categoryStr, type) {
@@ -741,12 +744,12 @@ function renderShortcuts() {
     if(activeWallet === 'harian') { 
         c.className = 'quick-actions-wrap grid-mode grid-split-4'; 
         c.innerHTML = ` 
-            <button class="btn-quick glow-merah" onclick="quickInput('keluar', 'Makan', 'Beli')">${svgs.makan} <span>Beli</span></button> 
+            <button class="btn-quick glow-merah" onclick="quickInput('keluar', 'Makan', 'Beli Makan')">${svgs.makan} <span>Beli</span></button> 
             <button class="btn-quick glow-kuning" onclick="quickInput('keluar', 'Transport', 'Isi Bensin')">${svgs.transport} <span>Transport</span></button> 
             <button class="btn-quick glow-biru" onclick="quickInput('masuk', 'Top-Up', 'Isi Saldo')">${svgs.uang} <span>Isi Saldo</span></button> 
             <button class="btn-quick glow-ungu" onclick="quickInput('keluar', 'Dipinjam', 'Pinjamkan Uang', true)">${svgs.pinjam} <span>Dipinjam</span></button> 
-            <button class="btn-quick glow-kuning" onclick="quickInput('keluar', 'MANUAL', '')">${svgs.plus} <span>Lainnya (-)</span></button> 
-            <button class="btn-quick glow-hijau" onclick="quickInput('masuk', 'MANUAL', '')">${svgs.plus} <span>Lainnya (+)</span></button> 
+            <button class="btn-quick glow-kuning" onclick="quickInput('keluar', 'MANUAL', '')">${svgs.minus_circle} <span>Lainnya (-)</span></button> 
+            <button class="btn-quick glow-hijau" onclick="quickInput('masuk', 'MANUAL', '')">${svgs.plus_circle} <span>Lainnya (+)</span></button> 
         `; 
     } else { 
         c.className = 'quick-actions-wrap grid-mode grid-split-4'; 
@@ -1213,10 +1216,13 @@ function updateUI(searchTerm = '') {
     renderTable(fd); renderCharts(fd);
 }
 
+let tableIntersectionObserver = null;
+
 function renderTable(data) {
     const t = document.getElementById('table-body'); t.innerHTML = '';
     if(data.length === 0) { 
-        t.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color:var(--text-muted);">Tidak ada transaksi pada rentang waktu ini.</td></tr>`; return; 
+        t.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color:var(--text-muted);">Tidak ada transaksi pada rentang waktu ini.</td></tr>`; 
+        return; 
     }
     
     [...data].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
@@ -1242,7 +1248,7 @@ function renderTable(data) {
         else if (tx.status === 'lunas_pinjaman') cr = `<div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div>`;
         else if (tx.status === 'cicilan_masuk') cr = `<div class="badge-cat" style="border: 1px solid var(--kuning); color:var(--kuning); background:rgba(245,158,11,0.1);">CICILAN</div>`;
 
-                t.innerHTML += `<tr class="clickable-row" onclick="openReceipt('${tx.id || tx.date}')">
+        t.innerHTML += `<tr class="clickable-row render-anim" onclick="openReceipt('${tx.id || tx.date}')">
             <td style="color:var(--text-muted); font-size:11px; vertical-align:middle;">${formatDetailDate(tx.date).split(' - ')[0]}<br>${formatDetailDate(tx.date).split(' - ')[1]}</td>
             <td style="vertical-align:middle;">${cr}</td>
             <td style="vertical-align:middle; width:100%;">${dr}</td>
@@ -1257,13 +1263,45 @@ function renderTable(data) {
                 </div>
             </td>
             <td class="amt-cell" style="vertical-align:middle; text-align:right; color:${iM?'var(--biru)':'var(--merah)'}; white-space:nowrap; padding-left:0;">
-                <div style="display:flex; align-items:center; justify-content:flex-end; gap:3px;">
-                    <span style="font-size:16px; font-weight:900;">${iM?'+':'-'}</span>
-                    <span>${formatRp(tx.amount)}</span>
-                </div>
+                ${iM?'+':'-'}${formatRp(tx.amount)}
             </td>
         </tr>`;
     });
+
+    // MESIN RENDER ANTI-LAG & ANIMASI (Virtual DOM Bypass)
+    if(tableIntersectionObserver) tableIntersectionObserver.disconnect();
+    
+    if ('IntersectionObserver' in window) {
+        tableIntersectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1;
+                    entry.target.style.transform = 'translateY(0) scale(1)';
+                } else {
+                    entry.target.style.opacity = 0;
+                    // Logika pendeteksi arah tenggelam/muncul
+                    let boundY = entry.boundingClientRect.y;
+                    let viewHeight = window.innerHeight;
+                    if (boundY > viewHeight / 2) {
+                        entry.target.style.transform = 'translateY(25px) scale(0.95)'; // Tenggelam ke bawah
+                    } else {
+                        entry.target.style.transform = 'translateY(-25px) scale(0.95)'; // Tenggelam ke atas
+                    }
+                }
+            });
+        }, { rootMargin: '40px 0px', threshold: 0.1 });
+
+        document.querySelectorAll('.render-anim').forEach(row => {
+            row.style.opacity = 0;
+            row.style.transform = 'translateY(25px) scale(0.95)';
+            row.style.transition = 'opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+            row.style.willChange = 'opacity, transform';
+            // Penghemat RAM otomatis saat data di luar layar
+            row.style.contentVisibility = 'auto'; 
+            row.style.containIntrinsicSize = '70px';
+            tableIntersectionObserver.observe(row);
+        });
+    }
 }
 
 function renderCharts(data) {
