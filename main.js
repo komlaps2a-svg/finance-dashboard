@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '30.7'; 
+const APP_VERSION = '30.8'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -1219,7 +1219,7 @@ function updateUI(searchTerm = '') {
 let tableIntersectionObserver = null;
 
 function renderTable(data) {
-    // INJEKSI CSS DINAMIS: Animasi 1x Render Anti-Lag, Kategori Elastis Seragam, Fix Batas Bawah Terpotong
+    // INJEKSI CSS DINAMIS: Animasi Statis (1x Render), Kotak Kategori Fleksibel Sempurna, Fix Batas Bawah
     if(!document.getElementById('core-ui-fixes')) {
         const style = document.createElement('style');
         style.id = 'core-ui-fixes';
@@ -1228,24 +1228,22 @@ function renderTable(data) {
                 max-width: none !important; 
                 width: 100% !important; 
                 box-sizing: border-box; 
-                overflow: visible !important; 
                 white-space: nowrap !important; 
                 display: block !important; 
                 text-align: center !important; 
                 padding: 6px 12px !important; 
             }
             .table-container { 
-                padding-bottom: 150px !important; 
+                padding-bottom: 250px !important; /* Diperbesar agar riwayat paling bawah aman */
             }
-            .row-anim { 
+            @keyframes initialFadeIn {
+                from { opacity: 0; transform: translate3d(0, 20px, 0); }
+                to { opacity: 1; transform: translate3d(0, 0, 0); }
+            }
+            .row-static-anim { 
                 opacity: 0; 
-                transform: translate3d(0, 20px, 0); 
-                transition: opacity 0.4s ease-out, transform 0.4s ease-out; 
-                will-change: auto; 
-            }
-            .row-anim.is-visible { 
-                opacity: 1; 
-                transform: translate3d(0, 0, 0); 
+                animation: initialFadeIn 0.5s ease-out forwards;
+                will-change: transform, opacity;
             }
         `;
         document.head.appendChild(style);
@@ -1260,7 +1258,7 @@ function renderTable(data) {
     // SISTEM VIRTUAL BATCHING DOM
     let htmlStr = '';
     
-    [...data].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
+    [...data].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach((tx, index) => {
         const iM = tx.type === 'masuk'; let c = getDynamicColor(tx.category, tx.type);
         let dr = `<span style="font-weight:700;">${tx.desc}</span>`;
         if(tx.status === 'dipinjam' || String(tx.status).startsWith('cicil_')) {
@@ -1283,7 +1281,10 @@ function renderTable(data) {
         else if (tx.status === 'lunas_pinjaman') cr = `<div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div>`;
         else if (tx.status === 'cicilan_masuk') cr = `<div class="badge-cat" style="border: 1px solid var(--kuning); color:var(--kuning); background:rgba(245,158,11,0.1);">CICILAN</div>`;
 
-        htmlStr += `<tr class="clickable-row row-anim" onclick="openReceipt('${tx.id || tx.date}')">
+        // Kalkulasi delay agar render jatuh bertahap (Maksimal 15 item awal yang dianimasikan berurutan agar cepat)
+        let delayAnim = index < 15 ? (index * 0.04) : 0;
+
+        htmlStr += `<tr class="clickable-row row-static-anim" style="animation-delay: ${delayAnim}s;" onclick="openReceipt('${tx.id || tx.date}')">
             <td style="color:var(--text-muted); font-size:11px; vertical-align:middle;">${formatDetailDate(tx.date).split(' - ')[0]}<br>${formatDetailDate(tx.date).split(' - ')[1]}</td>
             
             <!-- Lebar Kolom 1% untuk memaksa tabel menyusut rapi pada kategori terpanjang -->
@@ -1306,26 +1307,8 @@ function renderTable(data) {
         </tr>`;
     });
 
+    // Pasang HTML secara instan ke DOM (Tidak ada observer)
     t.innerHTML = htmlStr;
-
-    // MESIN ANIMASI OBSERVER (ONE-TIME RENDER: ANTI-LAG!)
-    if(window.tableObserver) window.tableObserver.disconnect();
-    
-    if ('IntersectionObserver' in window) {
-        window.tableObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                    // KUNCI PERFORMA: Begitu animasi tampil, lepaskan pemantauan untuk mencegah kalkulasi DOM saat digulir
-                    observer.unobserve(entry.target); 
-                }
-            });
-        }, { rootMargin: '200px 0px 200px 0px', threshold: 0 }); // Margin diperbesar agar render siap sebelum masuk layar
-
-        document.querySelectorAll('.row-anim').forEach(row => window.tableObserver.observe(row));
-    } else {
-        document.querySelectorAll('.row-anim').forEach(row => row.classList.add('is-visible'));
-    }
 }
 
 function renderCharts(data) {
