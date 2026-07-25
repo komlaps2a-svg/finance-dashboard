@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '30.2'; 
+const APP_VERSION = '30.3'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -66,7 +66,10 @@ const svgs = {
     pinjam: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3v3m-4-3v3M7 3v3m14 8H3m18 4H3m2-14h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>`,
     check: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`
 };
-const categories = { masuk: ['Gaji', 'Top-Up', 'Bonus', 'Usaha'], keluar: ['Makan', 'Transport', 'Belanja', 'Tagihan'] };
+const categories = { 
+    masuk: ['Gaji', 'Top-Up', 'Bonus', 'Usaha', 'Investasi', 'Hadiah', 'Lainnya'], 
+    keluar: ['Makan', 'Transport', 'Belanja', 'Tagihan', 'Hiburan', 'Kesehatan', 'Pendidikan', 'Cicilan', 'Sedekah', 'Lainnya'] 
+};
 
 function getDynamicColor(categoryStr, type) {
     if (categoryStr === 'Pindah Tabungan') return '#f59e0b';
@@ -738,7 +741,7 @@ function renderShortcuts() {
     if(activeWallet === 'harian') { 
         c.className = 'quick-actions-wrap grid-mode grid-split-4'; 
         c.innerHTML = ` 
-            <button class="btn-quick glow-merah" onclick="quickInput('keluar', 'Makan', 'Beli Makan')">${svgs.makan} <span>Beli Makan</span></button> 
+            <button class="btn-quick glow-merah" onclick="quickInput('keluar', 'Makan', 'Beli')">${svgs.makan} <span>Beli</span></button> 
             <button class="btn-quick glow-kuning" onclick="quickInput('keluar', 'Transport', 'Isi Bensin')">${svgs.transport} <span>Transport</span></button> 
             <button class="btn-quick glow-biru" onclick="quickInput('masuk', 'Top-Up', 'Isi Saldo')">${svgs.uang} <span>Isi Saldo</span></button> 
             <button class="btn-quick glow-ungu" onclick="quickInput('keluar', 'Dipinjam', 'Pinjamkan Uang', true)">${svgs.pinjam} <span>Dipinjam</span></button> 
@@ -1239,7 +1242,7 @@ function renderTable(data) {
         else if (tx.status === 'lunas_pinjaman') cr = `<div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div>`;
         else if (tx.status === 'cicilan_masuk') cr = `<div class="badge-cat" style="border: 1px solid var(--kuning); color:var(--kuning); background:rgba(245,158,11,0.1);">CICILAN</div>`;
 
-        t.innerHTML += `<tr class="clickable-row" onclick="openReceipt('${tx.id || tx.date}')">
+                t.innerHTML += `<tr class="clickable-row" onclick="openReceipt('${tx.id || tx.date}')">
             <td style="color:var(--text-muted); font-size:11px; vertical-align:middle;">${formatDetailDate(tx.date).split(' - ')[0]}<br>${formatDetailDate(tx.date).split(' - ')[1]}</td>
             <td style="vertical-align:middle;">${cr}</td>
             <td style="vertical-align:middle; width:100%;">${dr}</td>
@@ -1254,7 +1257,10 @@ function renderTable(data) {
                 </div>
             </td>
             <td class="amt-cell" style="vertical-align:middle; text-align:right; color:${iM?'var(--biru)':'var(--merah)'}; white-space:nowrap; padding-left:0;">
-                ${iM?'+':'-'}${formatRp(tx.amount)}
+                <div style="display:flex; align-items:center; justify-content:flex-end; gap:3px;">
+                    <span style="font-size:16px; font-weight:900;">${iM?'+':'-'}</span>
+                    <span>${formatRp(tx.amount)}</span>
+                </div>
             </td>
         </tr>`;
     });
