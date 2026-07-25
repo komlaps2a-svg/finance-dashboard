@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '30.5'; 
+const APP_VERSION = '30.6'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -1219,16 +1219,16 @@ function updateUI(searchTerm = '') {
 let tableIntersectionObserver = null;
 
 function renderTable(data) {
-    // INJEKSI CSS DINAMIS (Anti-Lag, Teks Rapi, Animasi, & Fix Tabel Terpotong)
+    // INJEKSI CSS DINAMIS (Hardware GPU Acceleration, Anti-Lag, & Fix Tabel Bawah Terpotong)
     if(!document.getElementById('core-ui-fixes')) {
         const style = document.createElement('style');
         style.id = 'core-ui-fixes';
         style.innerHTML = `
             .badge-cat { max-width: 105px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block !important; vertical-align: middle; }
-            .table-container { padding-bottom: 50px; }
-            .row-anim { opacity: 0; transform: translateY(25px); transition: opacity 0.35s ease, transform 0.35s ease; will-change: opacity, transform; content-visibility: auto; contain-intrinsic-size: 70px; }
-            .row-anim.is-visible { opacity: 1; transform: translateY(0); }
-            .row-anim.scroll-up { transform: translateY(-25px); }
+            .table-container { padding-bottom: 120px !important; }
+            .row-anim { opacity: 0; transform: translate3d(0, 35px, 0); transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform, opacity; -webkit-backface-visibility: hidden; backface-visibility: hidden; perspective: 1000px; }
+            .row-anim.is-visible { opacity: 1; transform: translate3d(0, 0, 0); }
+            .row-anim.scroll-up { transform: translate3d(0, -35px, 0); }
         `;
         document.head.appendChild(style);
     }
@@ -1239,7 +1239,7 @@ function renderTable(data) {
         return; 
     }
     
-    // SISTEM VIRTUAL BATCHING: Mencegah CPU Lag pada Render Ribuan Data
+    // SISTEM VIRTUAL BATCHING DOM
     let htmlStr = '';
     
     [...data].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
@@ -1285,10 +1285,9 @@ function renderTable(data) {
         </tr>`;
     });
 
-    // Tempelkan sekaligus (Menghemat 99% RAM)
     t.innerHTML = htmlStr;
 
-    // MESIN ANIMASI & OBSERVER
+    // MESIN ANIMASI OBSERVER (GPU Accelerated)
     if(window.tableObserver) window.tableObserver.disconnect();
     
     if ('IntersectionObserver' in window) {
@@ -1296,18 +1295,15 @@ function renderTable(data) {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('is-visible');
-                    entry.target.classList.remove('scroll-up', 'scroll-down');
+                    entry.target.classList.remove('scroll-up');
                 } else {
                     entry.target.classList.remove('is-visible');
-                    // Deteksi posisi hilang untuk efek timbul/tenggelam
-                    if (entry.boundingClientRect.top < 0) {
+                    if (entry.boundingClientRect.y < 0) {
                         entry.target.classList.add('scroll-up');
-                    } else {
-                        entry.target.classList.add('scroll-down');
                     }
                 }
             });
-        }, { rootMargin: '50px', threshold: 0.1 });
+        }, { rootMargin: '150px 0px 150px 0px', threshold: 0 });
 
         document.querySelectorAll('.row-anim').forEach(row => window.tableObserver.observe(row));
     } else {
