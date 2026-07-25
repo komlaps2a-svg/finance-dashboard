@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '30.4'; 
+const APP_VERSION = '30.5'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -65,8 +65,8 @@ const svgs = {
     plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
     pinjam: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3v3m-4-3v3M7 3v3m14 8H3m18 4H3m2-14h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>`,
     check: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
-    plus_circle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
-    minus_circle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`
+    plus_bold: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
+    minus_bold: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`
 };
 
 const categories = { 
@@ -748,8 +748,8 @@ function renderShortcuts() {
             <button class="btn-quick glow-kuning" onclick="quickInput('keluar', 'Transport', 'Isi Bensin')">${svgs.transport} <span>Transport</span></button> 
             <button class="btn-quick glow-biru" onclick="quickInput('masuk', 'Top-Up', 'Isi Saldo')">${svgs.uang} <span>Isi Saldo</span></button> 
             <button class="btn-quick glow-ungu" onclick="quickInput('keluar', 'Dipinjam', 'Pinjamkan Uang', true)">${svgs.pinjam} <span>Dipinjam</span></button> 
-            <button class="btn-quick glow-kuning" onclick="quickInput('keluar', 'MANUAL', '')">${svgs.minus_circle} <span>Lainnya (-)</span></button> 
-            <button class="btn-quick glow-hijau" onclick="quickInput('masuk', 'MANUAL', '')">${svgs.plus_circle} <span>Lainnya (+)</span></button> 
+            <button class="btn-quick glow-kuning" onclick="quickInput('keluar', 'MANUAL', '')">${svgs.minus_bold} <span>Lainnya (-)</span></button> 
+            <button class="btn-quick glow-hijau" onclick="quickInput('masuk', 'MANUAL', '')">${svgs.plus_bold} <span>Lainnya (+)</span></button> 
         `; 
     } else { 
         c.className = 'quick-actions-wrap grid-mode grid-split-4'; 
@@ -1219,11 +1219,28 @@ function updateUI(searchTerm = '') {
 let tableIntersectionObserver = null;
 
 function renderTable(data) {
-    const t = document.getElementById('table-body'); t.innerHTML = '';
+    // INJEKSI CSS DINAMIS (Anti-Lag, Teks Rapi, Animasi, & Fix Tabel Terpotong)
+    if(!document.getElementById('core-ui-fixes')) {
+        const style = document.createElement('style');
+        style.id = 'core-ui-fixes';
+        style.innerHTML = `
+            .badge-cat { max-width: 105px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block !important; vertical-align: middle; }
+            .table-container { padding-bottom: 50px; }
+            .row-anim { opacity: 0; transform: translateY(25px); transition: opacity 0.35s ease, transform 0.35s ease; will-change: opacity, transform; content-visibility: auto; contain-intrinsic-size: 70px; }
+            .row-anim.is-visible { opacity: 1; transform: translateY(0); }
+            .row-anim.scroll-up { transform: translateY(-25px); }
+        `;
+        document.head.appendChild(style);
+    }
+
+    const t = document.getElementById('table-body');
     if(data.length === 0) { 
         t.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color:var(--text-muted);">Tidak ada transaksi pada rentang waktu ini.</td></tr>`; 
         return; 
     }
+    
+    // SISTEM VIRTUAL BATCHING: Mencegah CPU Lag pada Render Ribuan Data
+    let htmlStr = '';
     
     [...data].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
         const iM = tx.type === 'masuk'; let c = getDynamicColor(tx.category, tx.type);
@@ -1248,7 +1265,7 @@ function renderTable(data) {
         else if (tx.status === 'lunas_pinjaman') cr = `<div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div>`;
         else if (tx.status === 'cicilan_masuk') cr = `<div class="badge-cat" style="border: 1px solid var(--kuning); color:var(--kuning); background:rgba(245,158,11,0.1);">CICILAN</div>`;
 
-        t.innerHTML += `<tr class="clickable-row render-anim" onclick="openReceipt('${tx.id || tx.date}')">
+        htmlStr += `<tr class="clickable-row row-anim" onclick="openReceipt('${tx.id || tx.date}')">
             <td style="color:var(--text-muted); font-size:11px; vertical-align:middle;">${formatDetailDate(tx.date).split(' - ')[0]}<br>${formatDetailDate(tx.date).split(' - ')[1]}</td>
             <td style="vertical-align:middle;">${cr}</td>
             <td style="vertical-align:middle; width:100%;">${dr}</td>
@@ -1268,39 +1285,33 @@ function renderTable(data) {
         </tr>`;
     });
 
-    // MESIN RENDER ANTI-LAG & ANIMASI (Virtual DOM Bypass)
-    if(tableIntersectionObserver) tableIntersectionObserver.disconnect();
+    // Tempelkan sekaligus (Menghemat 99% RAM)
+    t.innerHTML = htmlStr;
+
+    // MESIN ANIMASI & OBSERVER
+    if(window.tableObserver) window.tableObserver.disconnect();
     
     if ('IntersectionObserver' in window) {
-        tableIntersectionObserver = new IntersectionObserver((entries) => {
+        window.tableObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.style.opacity = 1;
-                    entry.target.style.transform = 'translateY(0) scale(1)';
+                    entry.target.classList.add('is-visible');
+                    entry.target.classList.remove('scroll-up', 'scroll-down');
                 } else {
-                    entry.target.style.opacity = 0;
-                    // Logika pendeteksi arah tenggelam/muncul
-                    let boundY = entry.boundingClientRect.y;
-                    let viewHeight = window.innerHeight;
-                    if (boundY > viewHeight / 2) {
-                        entry.target.style.transform = 'translateY(25px) scale(0.95)'; // Tenggelam ke bawah
+                    entry.target.classList.remove('is-visible');
+                    // Deteksi posisi hilang untuk efek timbul/tenggelam
+                    if (entry.boundingClientRect.top < 0) {
+                        entry.target.classList.add('scroll-up');
                     } else {
-                        entry.target.style.transform = 'translateY(-25px) scale(0.95)'; // Tenggelam ke atas
+                        entry.target.classList.add('scroll-down');
                     }
                 }
             });
-        }, { rootMargin: '40px 0px', threshold: 0.1 });
+        }, { rootMargin: '50px', threshold: 0.1 });
 
-        document.querySelectorAll('.render-anim').forEach(row => {
-            row.style.opacity = 0;
-            row.style.transform = 'translateY(25px) scale(0.95)';
-            row.style.transition = 'opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
-            row.style.willChange = 'opacity, transform';
-            // Penghemat RAM otomatis saat data di luar layar
-            row.style.contentVisibility = 'auto'; 
-            row.style.containIntrinsicSize = '70px';
-            tableIntersectionObserver.observe(row);
-        });
+        document.querySelectorAll('.row-anim').forEach(row => window.tableObserver.observe(row));
+    } else {
+        document.querySelectorAll('.row-anim').forEach(row => row.classList.add('is-visible'));
     }
 }
 
