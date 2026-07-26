@@ -16,7 +16,7 @@ body {
     font-family: 'Inter', sans-serif; 
     background-color: var(--navy); 
     color: var(--putih);
-    margin: 0; 
+    marbadge-catgin: 0; 
     padding: 20px; 
     line-height: 1.5; 
     touch-action: manipulation; 
@@ -213,8 +213,7 @@ body {
 .search-input { width: 100%; padding: 14px 45px 14px 15px; background: var(--hitam-card); border: 1px solid var(--border); border-radius: 10px; color: var(--putih); font-size: 13px; font-family: inherit; font-weight: 600; outline: none; transition: border-color 0.3s;}
 .search-input:focus { border-color: var(--biru); box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
 .search-clear { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; display: none; font-weight: bold; }
-
-.table-container { background: var(--hitam-card); border: 1px solid var(--border); border-radius: 16px; overflow-x: auto; }
+.table-container { background: var(--hitam-card); border: 1px solid var(--border); border-radius: 16px; overflow-x: auto; padding-bottom: 30px; margin-bottom: 20px; }
 table { width: 100%; min-width: 600px; border-collapse: collapse; text-align: left; }
 th { background: rgba(0,0,0,0.4); padding: 15px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; white-space: nowrap;}
 td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; white-space: nowrap;}
@@ -222,9 +221,21 @@ tr:last-child td { border-bottom: none; }
 .clickable-row { cursor: pointer; transition: background 0.2s; }
 .clickable-row:hover { background: rgba(255,255,255,0.03); }
 .clickable-row:active { background: rgba(255,255,255,0.06); }
+.badge-cat { display: block; width: 100%; text-align: center; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 900; white-space: nowrap; box-sizing: border-box; text-transform: uppercase; letter-spacing: 0.5px; }
+.btn-lunasi { background: var(--hijau); color: var(--hitam); border: none; padding: 8px 0; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; transition: 0.2s; box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); margin-top: 5px; width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 4px; }
 
-.badge-cat { display: inline-block; width: 130px; text-align: center; padding: 6px 0; border-radius: 6px; font-size: 11px; font-weight: 900; white-space: nowrap; box-sizing: border-box; text-transform: uppercase; letter-spacing: 0.5px; }
-.btn-lunasi { background: var(--hijau); color: var(--hitam); border: none; padding: 8px 0; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; transition: 0.2s; box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); margin-top: 5px; width: 130px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 4px; }
+/* LAYOUT KATEGORI SEJAJAR & ANIMASI TABEL */
+.col-category { width: 1%; white-space: nowrap; padding: 15px 10px; vertical-align: middle; }
+.badge-wrapper { display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 5px; width: 100%; }
+
+@keyframes slideInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+.row-anim { opacity: 0; animation: slideInUp 0.3s ease-out forwards; will-change: transform, opacity; }
+.row-anim:nth-child(1) { animation-delay: 0.0s; }
+.row-anim:nth-child(2) { animation-delay: 0.05s; }
+.row-anim:nth-child(3) { animation-delay: 0.1s; }
+.row-anim:nth-child(4) { animation-delay: 0.15s; }
+.row-anim:nth-child(n+5) { animation-delay: 0.2s; }
+
 .btn-lunasi:active { transform: scale(0.95); }
 .amt-cell { text-align: right; font-family: 'Courier New', Courier, monospace; font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 900; letter-spacing: -0.5px; }
 .hutang-banner { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--merah); padding: 15px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
