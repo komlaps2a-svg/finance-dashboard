@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '30.8'; 
+const APP_VERSION = '30.9'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -836,20 +836,22 @@ document.getElementById('tx-amount').addEventListener('input', function() {
 
 function lunasiPinjaman(e, txId) { 
     e.stopPropagation(); 
-    promptTxPin(() => { 
-        const strTxId = String(txId); 
-        const idx = db.findIndex(t => String(t.id) === strTxId || String(t.date) === strTxId); 
-        if(idx > -1) { 
-            const tx = db[idx]; 
-            let sisa = tx.status === 'dipinjam' ? tx.amount : parseInt(tx.status.split('_')[1]);
+    promptActionPin('pay_loan', txId);
+}
 
-            document.getElementById('loanPaymentId').value = strTxId;
-            document.getElementById('loanMaxAmount').value = sisa;
-            document.getElementById('loanPaymentMsg').innerHTML = `Peminjam: <b style="color:var(--putih);">${tx.borrower}</b><br>Sisa Pinjaman: <b style="color:var(--kuning);">${formatRp(sisa)}</b>`;
-            document.getElementById('loanPaymentInput').value = '';
-            document.getElementById('loanPaymentModal').classList.add('active'); 
-        } 
-    }); 
+function executePayLoanPrompt(txId) {
+    const strTxId = String(txId); 
+    const idx = db.findIndex(t => String(t.id) === strTxId || String(t.date) === strTxId); 
+    if(idx > -1) { 
+        const tx = db[idx]; 
+        let sisa = tx.status === 'dipinjam' ? tx.amount : parseInt(tx.status.split('_')[1]);
+
+        document.getElementById('loanPaymentId').value = strTxId;
+        document.getElementById('loanMaxAmount').value = sisa;
+        document.getElementById('loanPaymentMsg').innerHTML = `Peminjam: <b style="color:var(--putih);">${tx.borrower}</b><br>Sisa Pinjaman: <b style="color:var(--kuning);">${formatRp(sisa)}</b>`;
+        document.getElementById('loanPaymentInput').value = '';
+        document.getElementById('loanPaymentModal').classList.add('active'); 
+    } 
 }
 
 function setFullLoanAmount() {
@@ -1219,32 +1221,72 @@ function updateUI(searchTerm = '') {
 let tableIntersectionObserver = null;
 
 function renderTable(data) {
-    // INJEKSI CSS DINAMIS: Animasi Statis (1x Render), Kotak Kategori Fleksibel Sempurna, Fix Batas Bawah
     if(!document.getElementById('core-ui-fixes')) {
         const style = document.createElement('style');
         style.id = 'core-ui-fixes';
         style.innerHTML = `
-            .badge-cat { 
-                max-width: none !important; 
-                width: 100% !important; 
-                box-sizing: border-box; 
-                white-space: nowrap !important; 
-                display: block !important; 
-                text-align: center !important; 
-                padding: 6px 12px !important; 
-            }
+            /* Fix Tabel Terpotong */
             .table-container { 
-                padding-bottom: 250px !important; /* Diperbesar agar riwayat paling bawah aman */
+                padding-bottom: 250px !important; 
+                margin-bottom: 50px;
             }
-            @keyframes initialFadeIn {
-                from { opacity: 0; transform: translate3d(0, 20px, 0); }
-                to { opacity: 1; transform: translate3d(0, 0, 0); }
+            /* Sinkronisasi Lebar Kotak Kategori & Tombol */
+            .col-category {
+                width: 1%;
+                white-space: nowrap;
+                padding: 15px 10px;
+                vertical-align: middle;
             }
-            .row-static-anim { 
-                opacity: 0; 
-                animation: initialFadeIn 0.5s ease-out forwards;
+            .badge-wrapper {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch; 
+                gap: 5px;
+                width: 100%;
+            }
+            .badge-cat {
+                width: 100% !important;
+                box-sizing: border-box;
+                white-space: nowrap !important;
+                text-align: center !important;
+                padding: 6px 12px !important;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 11px;
+            }
+            .btn-lunasi {
+                width: 100% !important;
+                box-sizing: border-box;
+                text-align: center;
+                justify-content: center;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 11px;
+                font-weight: bold;
+                cursor: pointer;
+                border: none;
+                background: var(--hijau);
+                color: var(--putih);
+            }
+            /* Animasi Murni CSS (Anti-Lag) */
+            @keyframes slideInUp {
+                from { opacity: 0; transform: translateY(15px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .row-anim {
+                opacity: 0;
+                animation: slideInUp 0.3s ease-out forwards;
                 will-change: transform, opacity;
             }
+            /* Pembatasan render agar tidak berat */
+            .row-anim:nth-child(1) { animation-delay: 0.0s; }
+            .row-anim:nth-child(2) { animation-delay: 0.05s; }
+            .row-anim:nth-child(3) { animation-delay: 0.1s; }
+            .row-anim:nth-child(4) { animation-delay: 0.15s; }
+            .row-anim:nth-child(n+5) { animation-delay: 0.2s; }
         `;
         document.head.appendChild(style);
     }
@@ -1255,10 +1297,9 @@ function renderTable(data) {
         return; 
     }
     
-    // SISTEM VIRTUAL BATCHING DOM
     let htmlStr = '';
     
-    [...data].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach((tx, index) => {
+    [...data].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
         const iM = tx.type === 'masuk'; let c = getDynamicColor(tx.category, tx.type);
         let dr = `<span style="font-weight:700;">${tx.desc}</span>`;
         if(tx.status === 'dipinjam' || String(tx.status).startsWith('cicil_')) {
@@ -1271,25 +1312,23 @@ function renderTable(data) {
         }
         else if ((tx.status === 'lunas_pinjaman' || tx.status === 'cicilan_masuk') && tx.borrower) dr = `<span style="font-weight:700; color:var(--hijau);">${tx.desc}</span><br><span style="font-size:11px; color:var(--text-muted);">Peminjam: <b style="color:var(--putih);">${tx.borrower}</b></span>`;
         
-        let cr = `<div class="badge-cat" style="border: 1px solid ${c}; color:${c}; background:rgba(0,0,0,0.5);">${tx.category}</div>`;
-        if(tx.status === 'hutang') cr = `<div class="badge-cat" style="border: 1px solid var(--merah); color:var(--merah); background:rgba(239,68,68,0.2);">HUTANG</div>`;
-        else if (tx.status === 'lunas_hutang') cr = `<div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div>`;
+        let cr = `<div class="badge-wrapper"><div class="badge-cat" style="border: 1px solid ${c}; color:${c}; background:rgba(0,0,0,0.5);">${tx.category}</div></div>`;
+        
+        if(tx.status === 'hutang') cr = `<div class="badge-wrapper"><div class="badge-cat" style="border: 1px solid var(--merah); color:var(--merah); background:rgba(239,68,68,0.2);">HUTANG</div></div>`;
+        else if (tx.status === 'lunas_hutang') cr = `<div class="badge-wrapper"><div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div></div>`;
         else if (tx.status === 'dipinjam' || String(tx.status).startsWith('cicil_')) {
             let btnText = String(tx.status).startsWith('cicil_') ? 'DICICIL' : 'DIPINJAM';
-            cr = `<div style="display:flex; flex-direction:column; gap:5px;"><div class="badge-cat" style="border: 1px solid #a855f7; color:#a855f7; background:rgba(168,85,247,0.2);">${btnText}</div><button class="btn-lunasi" onclick="lunasiPinjaman(event, '${tx.id || tx.date}')">${svgs.check} BAYAR</button></div>`;
+            cr = `<div class="badge-wrapper">
+                    <div class="badge-cat" style="border: 1px solid #a855f7; color:#a855f7; background:rgba(168,85,247,0.2);">${btnText}</div>
+                    <button type="button" class="btn-lunasi" onclick="lunasiPinjaman(event, '${tx.id || tx.date}')">${svgs.check} BAYAR</button>
+                  </div>`;
         }
-        else if (tx.status === 'lunas_pinjaman') cr = `<div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div>`;
-        else if (tx.status === 'cicilan_masuk') cr = `<div class="badge-cat" style="border: 1px solid var(--kuning); color:var(--kuning); background:rgba(245,158,11,0.1);">CICILAN</div>`;
+        else if (tx.status === 'lunas_pinjaman') cr = `<div class="badge-wrapper"><div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div></div>`;
+        else if (tx.status === 'cicilan_masuk') cr = `<div class="badge-wrapper"><div class="badge-cat" style="border: 1px solid var(--kuning); color:var(--kuning); background:rgba(245,158,11,0.1);">CICILAN</div></div>`;
 
-        // Kalkulasi delay agar render jatuh bertahap (Maksimal 15 item awal yang dianimasikan berurutan agar cepat)
-        let delayAnim = index < 15 ? (index * 0.04) : 0;
-
-        htmlStr += `<tr class="clickable-row row-static-anim" style="animation-delay: ${delayAnim}s;" onclick="openReceipt('${tx.id || tx.date}')">
+        htmlStr += `<tr class="clickable-row row-anim" onclick="openReceipt('${tx.id || tx.date}')">
             <td style="color:var(--text-muted); font-size:11px; vertical-align:middle;">${formatDetailDate(tx.date).split(' - ')[0]}<br>${formatDetailDate(tx.date).split(' - ')[1]}</td>
-            
-            <!-- Lebar Kolom 1% untuk memaksa tabel menyusut rapi pada kategori terpanjang -->
-            <td style="vertical-align:middle; width:1%; white-space:nowrap; padding: 15px 10px;">${cr}</td>
-            
+            <td class="col-category">${cr}</td>
             <td style="vertical-align:middle; width:100%;">${dr}</td>
             <td style="vertical-align:middle; text-align:center; padding-right:15px; width:1%;">
                 <div style="display:flex; gap:6px; justify-content:center; align-items:center;">
@@ -1307,8 +1346,13 @@ function renderTable(data) {
         </tr>`;
     });
 
-    // Pasang HTML secara instan ke DOM (Tidak ada observer)
     t.innerHTML = htmlStr;
+    
+    // Matikan observer lama jika masih ada
+    if(window.tableObserver) {
+        window.tableObserver.disconnect();
+        window.tableObserver = null;
+    }
 }
 
 function renderCharts(data) {
@@ -1523,7 +1567,10 @@ async function verifyActionPinFinal() {
         closeModal('actionPinModal');
         const action = document.getElementById('actionPinType').value;
         const txId = document.getElementById('actionPinTxId').value;
-        if (action === 'edit') openEditTxModal(txId); else executeTxDeleteFinal(txId);
+        
+        if (action === 'edit') openEditTxModal(txId); 
+        else if (action === 'delete') executeTxDeleteFinal(txId);
+        else if (action === 'pay_loan') executePayLoanPrompt(txId); 
     } else {
         showToast("PIN Salah! Akses Ditolak.", "error");
     }
