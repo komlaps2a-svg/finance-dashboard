@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '30.9'; 
+const APP_VERSION = '40.0'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -37,6 +37,7 @@ let currentTimeFilter = 365;
 let rawAmount = 0;
 let pieChart, barChart, lineChart; 
 let pendingTxCallback = null;
+let isInitialTableRender = true; // Flag pembatas animasi
 let aiMessages = []; 
 let aiCurrentMsgIdx = 0; 
 let aiCarouselInterval = null; 
@@ -512,13 +513,19 @@ function promptTxPin(callback) {
 }
 
 async function verifyTxPin() { 
-    const val = document.getElementById('inputTxPin').value; 
+    const inputEl = document.getElementById('inputTxPin');
+    const val = inputEl.value; 
     if (val.length < 4) { showToast("Sandi min 4 digit", "error"); return; } 
     const hashedVal = await hashPIN(val); 
+    
     if (!profile.txPin) { 
         profile.txPin = hashedVal; saveProfileLocal(); await saveProfileToSupabase(); showToast("Sandi Dibuat!", "success"); 
     } else { 
-        if (hashedVal !== profile.txPin) { showToast("Sandi Salah!", "error"); return; } 
+        if (hashedVal !== profile.txPin) { 
+            inputEl.value = ''; // Mengosongkan form saat salah sandi
+            showToast("Sandi Salah!", "error"); 
+            return; 
+        } 
     } 
     closeModal('txPinModal'); if (pendingTxCallback) { pendingTxCallback(); pendingTxCallback = null; } 
 }
@@ -1221,84 +1228,16 @@ function updateUI(searchTerm = '') {
 let tableIntersectionObserver = null;
 
 function renderTable(data) {
-    if(!document.getElementById('core-ui-fixes')) {
-        const style = document.createElement('style');
-        style.id = 'core-ui-fixes';
-        style.innerHTML = `
-            /* Fix Tabel Terpotong */
-            .table-container { 
-                padding-bottom: 250px !important; 
-                margin-bottom: 50px;
-            }
-            /* Sinkronisasi Lebar Kotak Kategori & Tombol */
-            .col-category {
-                width: 1%;
-                white-space: nowrap;
-                padding: 15px 10px;
-                vertical-align: middle;
-            }
-            .badge-wrapper {
-                display: flex;
-                flex-direction: column;
-                align-items: stretch; 
-                gap: 5px;
-                width: 100%;
-            }
-            .badge-cat {
-                width: 100% !important;
-                box-sizing: border-box;
-                white-space: nowrap !important;
-                text-align: center !important;
-                padding: 6px 12px !important;
-                border-radius: 6px;
-                font-weight: bold;
-                font-size: 11px;
-            }
-            .btn-lunasi {
-                width: 100% !important;
-                box-sizing: border-box;
-                text-align: center;
-                justify-content: center;
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                padding: 6px 12px;
-                border-radius: 6px;
-                font-size: 11px;
-                font-weight: bold;
-                cursor: pointer;
-                border: none;
-                background: var(--hijau);
-                color: var(--putih);
-            }
-            /* Animasi Murni CSS (Anti-Lag) */
-            @keyframes slideInUp {
-                from { opacity: 0; transform: translateY(15px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            .row-anim {
-                opacity: 0;
-                animation: slideInUp 0.3s ease-out forwards;
-                will-change: transform, opacity;
-            }
-            /* Pembatasan render agar tidak berat */
-            .row-anim:nth-child(1) { animation-delay: 0.0s; }
-            .row-anim:nth-child(2) { animation-delay: 0.05s; }
-            .row-anim:nth-child(3) { animation-delay: 0.1s; }
-            .row-anim:nth-child(4) { animation-delay: 0.15s; }
-            .row-anim:nth-child(n+5) { animation-delay: 0.2s; }
-        `;
-        document.head.appendChild(style);
-    }
-
     const t = document.getElementById('table-body');
     if(data.length === 0) { 
         t.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color:var(--text-muted);">Tidak ada transaksi pada rentang waktu ini.</td></tr>`; 
+        isInitialTableRender = false;
         return; 
     }
     
     let htmlStr = '';
-    
+    const animClass = isInitialTableRender ? 'row-anim' : ''; // Animasi hanya dieksekusi 1x saat aplikasi dimuat
+
     [...data].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
         const iM = tx.type === 'masuk'; let c = getDynamicColor(tx.category, tx.type);
         let dr = `<span style="font-weight:700;">${tx.desc}</span>`;
@@ -1326,7 +1265,7 @@ function renderTable(data) {
         else if (tx.status === 'lunas_pinjaman') cr = `<div class="badge-wrapper"><div class="badge-cat" style="border: 1px solid var(--hijau); color:var(--hijau); background:rgba(16,185,129,0.1);">LUNAS</div></div>`;
         else if (tx.status === 'cicilan_masuk') cr = `<div class="badge-wrapper"><div class="badge-cat" style="border: 1px solid var(--kuning); color:var(--kuning); background:rgba(245,158,11,0.1);">CICILAN</div></div>`;
 
-        htmlStr += `<tr class="clickable-row row-anim" onclick="openReceipt('${tx.id || tx.date}')">
+        htmlStr += `<tr class="clickable-row ${animClass}" onclick="openReceipt('${tx.id || tx.date}')">
             <td style="color:var(--text-muted); font-size:11px; vertical-align:middle;">${formatDetailDate(tx.date).split(' - ')[0]}<br>${formatDetailDate(tx.date).split(' - ')[1]}</td>
             <td class="col-category">${cr}</td>
             <td style="vertical-align:middle; width:100%;">${dr}</td>
@@ -1347,12 +1286,7 @@ function renderTable(data) {
     });
 
     t.innerHTML = htmlStr;
-    
-    // Matikan observer lama jika masih ada
-    if(window.tableObserver) {
-        window.tableObserver.disconnect();
-        window.tableObserver = null;
-    }
+    isInitialTableRender = false; // Kunci render animasi paska load pertama
 }
 
 function renderCharts(data) {
