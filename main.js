@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '40.0'; 
+const APP_VERSION = '40.1'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -820,14 +820,17 @@ function quickInput(type, cat, desc, isLoan = false) {
     
     const bw = document.getElementById('borrowerWrapper'); 
     const lbDesc = document.getElementById('label-desc'); 
-    if(isLoanMode) { 
-        bw.style.display = 'block'; lbDesc.innerText = 'Deskripsi (Opsional)'; document.getElementById('tx-desc').value = 'Uang Dipinjamkan'; 
-    } else { 
-        bw.style.display = 'none'; lbDesc.innerText = 'Deskripsi'; document.getElementById('tx-desc').value = desc; 
-    } 
-    
-    document.getElementById('tx-amount').value = ''; rawAmount = 0; 
-    document.getElementById('txModal').classList.add('active'); 
+                if(isLoanMode) { 
+                bw.style.display = 'block'; lbDesc.innerText = 'Deskripsi (Opsional)'; document.getElementById('tx-desc').value = 'Uang Dipinjamkan'; 
+            } else { 
+                bw.style.display = 'none'; lbDesc.innerText = 'Deskripsi'; document.getElementById('tx-desc').value = desc; 
+            } 
+            
+            document.getElementById('tx-date-val').value = new Date().toISOString();
+            document.getElementById('dispTxDate').innerText = 'Hari Ini';
+            
+            document.getElementById('tx-amount').value = ''; rawAmount = 0; 
+            document.getElementById('txModal').classList.add('active');
     setTimeout(() => { 
         if(isLoanMode) document.getElementById('tx-borrower').focus(); 
         else if(cat === 'MANUAL') document.getElementById('tx-category-manual').focus(); 
@@ -964,6 +967,10 @@ document.getElementById('btnExecuteTx').addEventListener('click', async () => {
         
         cF = properTitleCase(cF); dF = properTitleCase(dF); 
         
+        const customDateStr = document.getElementById('tx-date-val').value;
+        const baseTimeObj = customDateStr ? new Date(customDateStr) : new Date();
+        const baseTimeMs = baseTimeObj.getTime();
+        
         let stat = 'normal'; let brw = ''; let txToSave = []; 
         let sI_har = 0, sO_har = 0; db.filter(t => t.wallet === 'harian').forEach(t => { if(t.type === 'masuk') sI_har += t.amount; else sO_har += t.amount; }); let saldoHarian = sI_har - sO_har; 
         let sI_tab = 0, sO_tab = 0; db.filter(t => t.wallet === 'tabungan').forEach(t => { if(t.type === 'masuk') sI_tab += t.amount; else sO_tab += t.amount; }); let saldoTabungan = sI_tab - sO_tab; 
@@ -972,14 +979,14 @@ document.getElementById('btnExecuteTx').addEventListener('click', async () => {
             if (type === 'masuk') { showToast("Ditolak! Indikasi manipulasi tabungan.", "error"); return; } 
             else if (type === 'keluar') { 
                 if (saldoHarian < rawAmount) { showToast(`Saldo harian kurang!`, "error"); return; } 
-                txToSave.push({ wallet: 'harian', type: 'keluar', category: 'Pindah Tabungan', desc: 'Auto-Transfer Ke Tabungan', borrower: '', status: 'normal', amount: rawAmount, date: new Date().toISOString() }); 
-                txToSave.push({ wallet: 'tabungan', type: 'masuk', category: 'Setor Manual', desc: dF, borrower: '', status: 'normal', amount: rawAmount, date: new Date().toISOString() }); 
+                txToSave.push({ wallet: 'harian', type: 'keluar', category: 'Pindah Tabungan', desc: 'Auto-Transfer Ke Tabungan', borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTimeMs).toISOString() }); 
+                txToSave.push({ wallet: 'tabungan', type: 'masuk', category: 'Setor Manual', desc: dF, borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTimeMs + 1000).toISOString() }); 
             } 
         } else if (activeWallet === 'tabungan' && /pindah|harian|tarik/i.test(cF) && cF.toLowerCase().includes('harian')) { 
             if (type === 'keluar') { 
                 if(rawAmount > saldoTabungan) { showToast("Saldo tabungan kurang!", "error"); return; } 
-                txToSave.push({ wallet: 'tabungan', type: 'keluar', category: 'Pindah Harian', desc: dF || 'Tarik Ke Dompet Harian', borrower: '', status: 'normal', amount: rawAmount, date: new Date().toISOString() }); 
-                txToSave.push({ wallet: 'harian', type: 'masuk', category: 'Dari Tabungan', desc: 'Suntikan Dana Tabungan', borrower: '', status: 'normal', amount: rawAmount, date: new Date().toISOString() }); 
+                txToSave.push({ wallet: 'tabungan', type: 'keluar', category: 'Pindah Harian', desc: dF || 'Tarik Ke Dompet Harian', borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTimeMs).toISOString() }); 
+                txToSave.push({ wallet: 'harian', type: 'masuk', category: 'Dari Tabungan', desc: 'Suntikan Dana Tabungan', borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTimeMs + 1000).toISOString() }); 
             } 
         } else { 
             if(activeWallet === 'harian') { 
@@ -989,7 +996,7 @@ document.getElementById('btnExecuteTx').addEventListener('click', async () => {
                     if(!brw) { showToast("Isi peminjam", "error"); return; } 
                     stat = 'dipinjam'; 
                 } 
-                txToSave.push({ wallet: activeWallet, type: type, category: cF, desc: dF, borrower: brw, status: stat, amount: rawAmount, date: new Date().toISOString() }); 
+                txToSave.push({ wallet: activeWallet, type: type, category: cF, desc: dF, borrower: brw, status: stat, amount: rawAmount, date: new Date(baseTimeMs).toISOString() }); 
             } else if (activeWallet === 'tabungan') { 
                 if (type === 'keluar') { 
                     if(rawAmount > saldoTabungan) { showToast("Saldo tabungan kurang!", "error"); return; } 
@@ -997,18 +1004,17 @@ document.getElementById('btnExecuteTx').addEventListener('click', async () => {
                         brw = properTitleCase(document.getElementById('tx-borrower').value.trim()); 
                         if(!brw) { showToast("Isi peminjam", "error"); return; } 
                         stat = 'dipinjam'; 
-                        txToSave.push({ wallet: activeWallet, type: type, category: cF, desc: dF, borrower: brw, status: stat, amount: rawAmount, date: new Date().toISOString() }); 
+                        txToSave.push({ wallet: activeWallet, type: type, category: cF, desc: dF, borrower: brw, status: stat, amount: rawAmount, date: new Date(baseTimeMs).toISOString() }); 
                     } 
                     else { 
-                        const baseTime = Date.now(); 
-                        txToSave.push({ wallet: 'tabungan', type: 'keluar', category: 'Pencairan', desc: `Dicairkan Untuk: ${dF}`, borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTime).toISOString() }); 
-                        txToSave.push({ wallet: 'harian', type: 'masuk', category: 'Dari Tabungan', desc: `Pencairan Untuk: ${dF}`, borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTime + 1000).toISOString() }); 
-                        txToSave.push({ wallet: 'harian', type: 'keluar', category: cF, desc: dF, borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTime + 2000).toISOString() }); 
+                        txToSave.push({ wallet: 'tabungan', type: 'keluar', category: 'Pencairan', desc: `Dicairkan Untuk: ${dF}`, borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTimeMs).toISOString() }); 
+                        txToSave.push({ wallet: 'harian', type: 'masuk', category: 'Dari Tabungan', desc: `Pencairan Untuk: ${dF}`, borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTimeMs + 1000).toISOString() }); 
+                        txToSave.push({ wallet: 'harian', type: 'keluar', category: cF, desc: dF, borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTimeMs + 2000).toISOString() }); 
                     } 
                 } else if (type === 'masuk') { 
                     if (saldoHarian < rawAmount) { showToast(`Saldo Harian kurang untuk ditabung!`, "error"); return; } 
-                    txToSave.push({ wallet: 'harian', type: 'keluar', category: 'Pindah Tabungan', desc: 'Auto-Transfer Ke Tabungan', borrower: '', status: 'normal', amount: rawAmount, date: new Date().toISOString() }); 
-                    txToSave.push({ wallet: 'tabungan', type: 'masuk', category: cF, desc: dF, borrower: '', status: 'normal', amount: rawAmount, date: new Date().toISOString() }); 
+                    txToSave.push({ wallet: 'harian', type: 'keluar', category: 'Pindah Tabungan', desc: 'Auto-Transfer Ke Tabungan', borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTimeMs).toISOString() }); 
+                    txToSave.push({ wallet: 'tabungan', type: 'masuk', category: cF, desc: dF, borrower: '', status: 'normal', amount: rawAmount, date: new Date(baseTimeMs + 1000).toISOString() }); 
                 } 
             } 
         } 
@@ -1596,4 +1602,70 @@ function executeTxDeleteFinal(txId) {
 function promptActionPinFromTable(e, action, txId) {
     e.stopPropagation(); 
     promptActionPin(action, txId);
+}
+// ==========================================
+// MESIN KALENDER KUSTOM (ALGORITMA UI)
+// ==========================================
+let currentCalDate = new Date();
+
+function openCustomDatePicker() {
+    const rawVal = document.getElementById('tx-date-val').value;
+    currentCalDate = new Date(rawVal || new Date());
+    renderCalendar();
+    document.getElementById('customDatePickerModal').classList.add('active');
+}
+
+function renderCalendar() {
+    const year = currentCalDate.getFullYear();
+    const month = currentCalDate.getMonth();
+    const today = new Date();
+    
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    document.getElementById('calMonthYear').innerText = `${monthNames[month]} ${year}`;
+    
+    let firstDay = new Date(year, month, 1).getDay();
+    firstDay = firstDay === 0 ? 6 : firstDay - 1; 
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    let gridHtml = '';
+    for (let i = 0; i < firstDay; i++) {
+        gridHtml += `<div class="cal-day empty"></div>`;
+    }
+    
+    const selRaw = document.getElementById('tx-date-val').value;
+    const sel = new Date(selRaw || new Date());
+    const selectedStr = `${sel.getFullYear()}-${sel.getMonth()}-${sel.getDate()}`;
+    const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const iterDate = new Date(year, month, d, today.getHours(), today.getMinutes(), today.getSeconds());
+        const iterStr = `${year}-${month}-${d}`;
+        
+        let cls = 'cal-day';
+        if (iterStr === todayStr) cls += ' today';
+        if (iterStr === selectedStr) cls += ' selected';
+        
+        const isoString = iterDate.toISOString(); 
+        gridHtml += `<div class="${cls}" onclick="selectDate('${isoString}')">${d}</div>`;
+    }
+    document.getElementById('calendarGrid').innerHTML = gridHtml;
+}
+
+function changeMonth(dir) {
+    currentCalDate.setMonth(currentCalDate.getMonth() + dir);
+    renderCalendar();
+}
+
+function selectDate(isoString) {
+    const d = new Date(isoString);
+    document.getElementById('tx-date-val').value = isoString;
+    
+    const today = new Date();
+    if (d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate()) {
+        document.getElementById('dispTxDate').innerText = 'Hari Ini';
+    } else {
+        document.getElementById('dispTxDate').innerText = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    }
+    
+    closeModal('customDatePickerModal');
 }
