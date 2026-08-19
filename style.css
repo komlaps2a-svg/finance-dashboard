@@ -16,8 +16,8 @@ body {
     font-family: 'Inter', sans-serif; 
     background-color: var(--navy); 
     color: var(--putih);
-    marbadge-catgin: 0; 
-    padding: 20px; 
+    margin: 0; 
+    padding: 20px 20px 100px 20px; 
     line-height: 1.5; 
     touch-action: manipulation; 
     overflow-x: hidden;
@@ -177,7 +177,7 @@ body {
 .section-title { font-size: 14px; font-weight: 900; margin: 0; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;}
 .toggle-icon { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 .toggle-icon.rotated { transform: rotate(180deg); }
-.collapsible-content { max-height: 2500px; opacity: 1; overflow: hidden; transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease; }
+.collapsible-content { max-height: 15000px; opacity: 1; overflow: hidden; transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease; }
 .collapsible-content.hidden { max-height: 0; opacity: 0; pointer-events: none; margin: 0; }
 
 .quick-actions-wrap { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; -ms-overflow-style: none; scrollbar-width: none; margin-top: 25px; }
@@ -213,7 +213,7 @@ body {
 .search-input { width: 100%; padding: 14px 45px 14px 15px; background: var(--hitam-card); border: 1px solid var(--border); border-radius: 10px; color: var(--putih); font-size: 13px; font-family: inherit; font-weight: 600; outline: none; transition: border-color 0.3s;}
 .search-input:focus { border-color: var(--biru); box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
 .search-clear { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; display: none; font-weight: bold; }
-.table-container { background: var(--hitam-card); border: 1px solid var(--border); border-radius: 16px; overflow-x: auto; padding-bottom: 30px; margin-bottom: 20px; }
+.table-container { background: var(--hitam-card); border: 1px solid var(--border); border-radius: 16px; overflow-x: auto; padding-bottom: 30px; margin-bottom: 60px; }
 table { width: 100%; min-width: 600px; border-collapse: collapse; text-align: left; }
 th { background: rgba(0,0,0,0.4); padding: 15px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; white-space: nowrap;}
 td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; white-space: nowrap;}
@@ -564,3 +564,16 @@ canvas {
     backface-visibility: hidden !important;
     -webkit-font-smoothing: antialiased !important;
 }
+/* === MESIN KALENDER KUSTOM === */
+.calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.btn-cal-nav { background: var(--hitam); border: 1px solid var(--border); color: var(--text-muted); width: 36px; height: 36px; border-radius: 10px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s; font-weight: 900; }
+.btn-cal-nav:active { background: var(--biru); color: var(--putih); border-color: var(--biru); transform: scale(0.9); }
+.calendar-days-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; font-weight: 900; color: var(--text-muted); margin-bottom: 15px; text-transform: uppercase; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-day { padding: 12px 0; text-align: center; font-size: 13px; font-weight: 700; color: var(--putih); background: var(--hitam); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+.cal-day.empty { background: transparent; border: none; pointer-events: none; }
+.cal-day:active { transform: scale(0.85); }
+.cal-day.today { border-color: var(--kuning); color: var(--kuning); }
+.cal-day.selected { background: rgba(59, 130, 246, 0.2); border-color: var(--biru); color: var(--biru); box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.2); font-weight: 900; }
+[data-theme="light"] .cal-day { background: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
+[data-theme="light"] .cal-day.selected { background: #eff6ff; border-color: #3b82f6; box-shadow: none; }
