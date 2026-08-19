@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SISTEM AUTO-UPDATE & SMART CACHE BUSTER
 // ==========================================
-const APP_VERSION = '40.1'; 
+const APP_VERSION = '40.2'; 
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem('finance_app_version');
@@ -1531,6 +1531,15 @@ function openEditTxModal(txId) {
         bw.style.display = 'none';
         document.getElementById('edit-tx-borrower').value = '';
     }
+    
+    document.getElementById('edit-tx-date-val').value = tx.date;
+    const d = new Date(tx.date);
+    const today = new Date();
+    if (d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate()) {
+        document.getElementById('dispEditTxDate').innerText = 'Hari Ini';
+    } else {
+        document.getElementById('dispEditTxDate').innerText = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    }
 
     editRawAmount = tx.amount;
     document.getElementById('edit-tx-amount').value = editRawAmount.toLocaleString('id-ID');
@@ -1544,21 +1553,24 @@ async function saveEditedTx() {
 
     const nCat = properTitleCase(document.getElementById('edit-tx-category').value.trim());
     const nDesc = properTitleCase(document.getElementById('edit-tx-desc').value.trim());
+    const nDate = document.getElementById('edit-tx-date-val').value;
+    
     let nBrw = '';
     if (document.getElementById('editBorrowerWrapper').style.display === 'block') {
         nBrw = properTitleCase(document.getElementById('edit-tx-borrower').value.trim());
     }
 
-    if(!nCat || !nDesc || editRawAmount <= 0) { showToast("Gagal: Data manipulasi tidak lengkap.", "error"); return; }
+    if(!nCat || !nDesc || !nDate || editRawAmount <= 0) { showToast("Gagal: Data manipulasi tidak lengkap.", "error"); return; }
 
     db[idx].category = nCat;
     db[idx].desc = nDesc;
     db[idx].borrower = nBrw;
     db[idx].amount = editRawAmount;
+    db[idx].date = nDate;
 
     if (APP_MODE === 'CLOUD' && currentUser && currentUser.id !== 'offline_user' && navigator.onLine && sbClient && db[idx].id) {
         try {
-            await sbClient.from('transactions').update({ category: nCat, desc: nDesc, borrower: nBrw, amount: editRawAmount }).eq('id', db[idx].id);
+            await sbClient.from('transactions').update({ category: nCat, desc: nDesc, borrower: nBrw, amount: editRawAmount, date: nDate }).eq('id', db[idx].id);
         } catch(e) {
             let syncIdx = pendingSync.findIndex(t => String(t.id) === txId || String(t.date) === txId);
             if(syncIdx > -1) pendingSync[syncIdx] = db[idx]; else pendingSync.push(db[idx]);
@@ -1607,10 +1619,15 @@ function promptActionPinFromTable(e, action, txId) {
 // MESIN KALENDER KUSTOM (ALGORITMA UI)
 // ==========================================
 let currentCalDate = new Date();
+let activeDatePickerTarget = 'tx'; 
 
-function openCustomDatePicker() {
-    const rawVal = document.getElementById('tx-date-val').value;
-    currentCalDate = new Date(rawVal || new Date());
+function openCustomDatePicker(target = 'tx') {
+    activeDatePickerTarget = target;
+    let rawVal = document.getElementById(target + '-date-val').value;
+    
+    if (!rawVal || rawVal.trim() === '') rawVal = new Date().toISOString();
+    
+    currentCalDate = new Date(rawVal);
     renderCalendar();
     document.getElementById('customDatePickerModal').classList.add('active');
 }
@@ -1632,8 +1649,10 @@ function renderCalendar() {
         gridHtml += `<div class="cal-day empty"></div>`;
     }
     
-    const selRaw = document.getElementById('tx-date-val').value;
-    const sel = new Date(selRaw || new Date());
+    let selRaw = document.getElementById(activeDatePickerTarget + '-date-val').value;
+    if (!selRaw || selRaw.trim() === '') selRaw = new Date().toISOString();
+    const sel = new Date(selRaw);
+    
     const selectedStr = `${sel.getFullYear()}-${sel.getMonth()}-${sel.getDate()}`;
     const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
 
@@ -1658,13 +1677,15 @@ function changeMonth(dir) {
 
 function selectDate(isoString) {
     const d = new Date(isoString);
-    document.getElementById('tx-date-val').value = isoString;
+    document.getElementById(activeDatePickerTarget + '-date-val').value = isoString;
     
     const today = new Date();
+    const dispId = activeDatePickerTarget === 'tx' ? 'dispTxDate' : 'dispEditTxDate';
+    
     if (d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate()) {
-        document.getElementById('dispTxDate').innerText = 'Hari Ini';
+        document.getElementById(dispId).innerText = 'Hari Ini';
     } else {
-        document.getElementById('dispTxDate').innerText = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+        document.getElementById(dispId).innerText = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
     }
     
     closeModal('customDatePickerModal');
